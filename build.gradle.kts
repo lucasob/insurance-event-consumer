@@ -13,6 +13,8 @@ repositories {
 }
 
 dependencies {
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
+
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.0.3")
 }
