@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("io.kotest:kotest-assertions-core-jvm:5.0.3")
 }
 
 tasks.test {
