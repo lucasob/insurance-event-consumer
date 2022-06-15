@@ -25,9 +25,63 @@ class TestPolicies {
 
 
     @Test
-    fun `a policy with no updates will remain completely unchanged`() {
-        val initialPolicy = simplePolicy()
-        initialPolicy.nextPeriod(null) shouldBe initialPolicy
+    fun `a policy with no updates will only progress to the next month`() {
+        table(
+            headers("Month", "Next Month"),
+            row(Month.JANUARY, Month.FEBRUARY),
+            row(Month.DECEMBER, Month.JANUARY)
+        ).forAll{ currentMonth, nextMonth ->
+            Policy(
+                at = currentMonth,
+                contractId = UUID.randomUUID().toString(),
+                currentPremium = 0L,
+                actualGrossWrittenPremiumToDate = 0L,
+                expectedGrossWrittenPremium = 0L
+            ).nextPeriod(null).at shouldBe nextMonth
+        }
+    }
+
+    @Test
+    fun `a cancelled policy cannot receive a new event`() {
+        val initialPolicy = Policy(
+            Month.JANUARY,
+            false,
+            UUID.randomUUID().toString(),
+            0L,
+            actualGrossWrittenPremiumToDate = 0L,
+            expectedGrossWrittenPremium = 0L
+        )
+
+        table(
+            headers("Event"),
+            row(
+                ContractCreatedEvent(
+                    initialPolicy.contractId,
+                    100L,
+                    LocalDate.of(2022, Month.FEBRUARY, 1).toString()
+                )
+            ),
+            row(
+                PriceIncreasedEvent(
+                    initialPolicy.contractId,
+                    100L,
+                    LocalDate.of(2022, Month.FEBRUARY, 1).toString()
+                )
+            ),
+            row(
+                PriceDecreasedEvent(
+                    initialPolicy.contractId,
+                    100L,
+                    LocalDate.of(2022, Month.FEBRUARY, 1).toString()
+                )
+            ),
+            row(
+                ContractTerminatedEvent(
+                    initialPolicy.contractId,
+                    LocalDate.of(2022, Month.FEBRUARY, 1).toString()
+                )
+            )
+        ).forAll { event -> shouldThrow<InvalidEventOrderException> { initialPolicy.nextPeriod(event) } }
     }
 
     @Test
@@ -84,15 +138,15 @@ class TestPolicies {
 
         val increaseEvent = PriceIncreasedEvent(
             contractId = initialPolicy.contractId,
-            atDate = Date().toString(),
+            atDate = LocalDate.of(2022, Month.FEBRUARY, 1).toString(),
             premiumIncrease = 100L
         )
 
         val expectedPolicy = Policy(
-            at = Month.JANUARY,
+            at = Month.FEBRUARY,
             contractId = initialPolicy.contractId,
             currentPremium = 200L,
-            actualGrossWrittenPremiumToDate = 200L,
+            actualGrossWrittenPremiumToDate = 300L,
             expectedGrossWrittenPremium = 2300L
         )
 
@@ -105,16 +159,16 @@ class TestPolicies {
 
         val decreaseEvent = PriceDecreasedEvent(
             contractId = initialPolicy.contractId,
-            atDate = Date().toString(),
+            atDate = LocalDate.of(2022, Month.FEBRUARY, 1).toString(),
             premiumReduction = 50L
         )
 
         val expectedPolicy = Policy(
-            at = Month.JANUARY,
+            at = Month.FEBRUARY,
             contractId = initialPolicy.contractId,
-            currentPremium = 200L,
-            actualGrossWrittenPremiumToDate = 200L,
-            expectedGrossWrittenPremium = 2300L
+            currentPremium = 50L,
+            actualGrossWrittenPremiumToDate = 150L,
+            expectedGrossWrittenPremium = 650L
         )
 
         initialPolicy.nextPeriod(decreaseEvent) shouldBe expectedPolicy
