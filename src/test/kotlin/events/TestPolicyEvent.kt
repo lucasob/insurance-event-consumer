@@ -1,4 +1,5 @@
-import events.*
+package events
+
 import io.kotest.data.forAll
 import io.kotest.data.headers
 import io.kotest.data.row
@@ -7,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class TestPremiumEvent {
+class TestPolicyEvent {
 
     @Test
     fun `will parse the date correctly`() {

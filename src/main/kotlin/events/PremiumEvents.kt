@@ -1,12 +1,13 @@
 package events
 
+import ContractId
 import java.time.LocalDate
 
-sealed class PremiumEvent {
-    abstract val contractId: String
+sealed class PolicyEvent {
+    abstract val contractId: ContractId
 }
 
-fun PremiumEvent.date() =
+fun PolicyEvent.date() =
     when (this) {
         is ContractCreatedEvent -> LocalDate.parse(this.startDate)
         is PriceIncreasedEvent -> LocalDate.parse(this.atDate)
@@ -18,21 +19,21 @@ data class ContractCreatedEvent(
     override val contractId: String,
     val premium: Long,
     val startDate: String
-) : PremiumEvent()
+) : PolicyEvent()
 
 data class PriceIncreasedEvent(
     override val contractId: String,
     val premiumIncrease: Long,
     val atDate: String
-) : PremiumEvent()
+) : PolicyEvent()
 
 data class PriceDecreasedEvent(
     override val contractId: String,
     val premiumReduction: Long,
     val atDate: String
-) : PremiumEvent()
+) : PolicyEvent()
 
 data class ContractTerminatedEvent(
     override val contractId: String,
     val terminationDate: String
-) : PremiumEvent()
+) : PolicyEvent()
