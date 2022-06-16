@@ -12,7 +12,7 @@ import java.time.LocalDate
 import java.time.Month
 import java.util.*
 
-class TestPolicies {
+class TestPolicySummaries {
 
     // Represents a policy that has been created
     private fun simplePolicy() = PolicySummary(
@@ -30,7 +30,7 @@ class TestPolicies {
             headers("Month", "Next Month"),
             row(Month.JANUARY, Month.FEBRUARY),
             row(Month.DECEMBER, Month.JANUARY)
-        ).forAll{ currentMonth, nextMonth ->
+        ).forAll { currentMonth, nextMonth ->
             PolicySummary(
                 at = currentMonth,
                 contractId = UUID.randomUUID().toString(),
@@ -193,5 +193,27 @@ class TestPolicies {
         )
 
         initialPolicy.nextPeriod(terminatedEvent) shouldBe expectedPolicySummary
+    }
+
+    @Test
+    fun `a policy created in january should generate a series of summaries for the rest of the year`() {
+        val newContractCreatedEvent = ContractCreatedEvent("1", 100L, "2020-01-01")
+
+        val expectedPolicies = listOf(
+            PolicySummary(Month.JANUARY, "1", 100L, 100L, 1200L),
+            PolicySummary(Month.FEBRUARY, "1", 100L, 200L, 1200L),
+            PolicySummary(Month.MARCH, "1", 100L, 300L, 1200L),
+            PolicySummary(Month.APRIL, "1", 100L, 400L, 1200L),
+            PolicySummary(Month.MAY, "1", 100L, 500L, 1200L),
+            PolicySummary(Month.JUNE, "1", 100L, 600L, 1200L),
+            PolicySummary(Month.JULY, "1", 100L, 700L, 1200L),
+            PolicySummary(Month.AUGUST, "1", 100L, 800L, 1200L),
+            PolicySummary(Month.SEPTEMBER, "1", 100L, 900L, 1200L),
+            PolicySummary(Month.OCTOBER, "1", 100L, 1000L, 1200L),
+            PolicySummary(Month.NOVEMBER, "1", 100L, 1100L, 1200L),
+            PolicySummary(Month.DECEMBER, "1", 100L, 1200L, 1200L)
+        )
+
+        listOf(newContractCreatedEvent).summaries() shouldBe expectedPolicies
     }
 }
