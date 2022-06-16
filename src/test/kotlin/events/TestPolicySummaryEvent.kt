@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class TestPolicyEvent {
+class TestPolicySummaryEvent {
 
     @Test
     fun `will parse the date correctly`() {

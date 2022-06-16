@@ -15,7 +15,7 @@ import java.util.*
 class TestPolicies {
 
     // Represents a policy that has been created
-    private fun simplePolicy() = Policy(
+    private fun simplePolicy() = PolicySummary(
         at = Month.JANUARY,
         contractId = UUID.randomUUID().toString(),
         currentPremium = 100L,
@@ -31,7 +31,7 @@ class TestPolicies {
             row(Month.JANUARY, Month.FEBRUARY),
             row(Month.DECEMBER, Month.JANUARY)
         ).forAll{ currentMonth, nextMonth ->
-            Policy(
+            PolicySummary(
                 at = currentMonth,
                 contractId = UUID.randomUUID().toString(),
                 currentPremium = 0L,
@@ -43,13 +43,13 @@ class TestPolicies {
 
     @Test
     fun `a cancelled policy cannot receive a new event`() {
-        val initialPolicy = Policy(
+        val initialPolicy = PolicySummary(
             Month.JANUARY,
-            false,
             UUID.randomUUID().toString(),
             0L,
             actualGrossWrittenPremiumToDate = 0L,
-            expectedGrossWrittenPremium = 0L
+            expectedGrossWrittenPremium = 0L,
+            terminatedOn = "2020-01-01"
         )
 
         table(
@@ -142,7 +142,7 @@ class TestPolicies {
             premiumIncrease = 100L
         )
 
-        val expectedPolicy = Policy(
+        val expectedPolicy = PolicySummary(
             at = Month.FEBRUARY,
             contractId = initialPolicy.contractId,
             currentPremium = 200L,
@@ -163,7 +163,7 @@ class TestPolicies {
             premiumReduction = 50L
         )
 
-        val expectedPolicy = Policy(
+        val expectedPolicySummary = PolicySummary(
             at = Month.FEBRUARY,
             contractId = initialPolicy.contractId,
             currentPremium = 50L,
@@ -171,6 +171,27 @@ class TestPolicies {
             expectedGrossWrittenPremium = 650L
         )
 
-        initialPolicy.nextPeriod(decreaseEvent) shouldBe expectedPolicy
+        initialPolicy.nextPeriod(decreaseEvent) shouldBe expectedPolicySummary
+    }
+
+    @Test
+    fun `a policy that is cancelled pays the final month and marks as terminated`() {
+        val initialPolicy = simplePolicy()
+
+        val terminatedEvent = ContractTerminatedEvent(
+            contractId = initialPolicy.contractId,
+            terminationDate = LocalDate.of(2022, Month.FEBRUARY, 1).toString()
+        )
+
+        val expectedPolicySummary = PolicySummary(
+            at = Month.FEBRUARY,
+            contractId = initialPolicy.contractId,
+            terminatedOn = terminatedEvent.terminationDate,
+            actualGrossWrittenPremiumToDate = 200L,
+            expectedGrossWrittenPremium = 200L,
+            currentPremium = 0L
+        )
+
+        initialPolicy.nextPeriod(terminatedEvent) shouldBe expectedPolicySummary
     }
 }
